@@ -1,14 +1,8 @@
 /* ======================================================
    Restoran Nusantara
    File: js/app.js
-   Deskripsi:
-   File utama aplikasi untuk:
-   - Load restoran realtime
-   - Load menu realtime
-   - Membuat customer
-   - Membuat order
-   - Membuat subkoleksi orderItems
-   - Menampilkan pesanan realtime
+   Struktur:
+   restaurants/warung_nusantara_jombang/branches/{branchId}/menus
 ====================================================== */
 
 import {
@@ -24,11 +18,16 @@ import {
     serverTimestamp
 } from "./firebase.js";
 
+import {
+    RESTAURANT_ID,
+    initializeDatabase
+} from "./seed.js";
+
 /* ======================================================
    DOM Element
 ====================================================== */
 
-const restaurantSelect = document.getElementById("restaurantSelect");
+const branchSelect = document.getElementById("restaurantSelect");
 const menuContainer = document.getElementById("menuContainer");
 const selectedItemsContainer = document.getElementById("selectedItemsContainer");
 const totalPriceText = document.getElementById("totalPriceText");
@@ -45,7 +44,7 @@ const alertBox = document.getElementById("alertBox");
    State
 ====================================================== */
 
-let restaurants = [];
+let branches = [];
 let currentMenus = [];
 let selectedItems = [];
 let unsubscribeMenus = null;
@@ -88,13 +87,13 @@ function formatRupiah(number) {
     }).format(number || 0);
 }
 
-function getSelectedRestaurant() {
-    const restaurantId = restaurantSelect.value;
-    return restaurants.find((restaurant) => restaurant.id === restaurantId);
-}
-
 function calculateTotalPrice() {
     return selectedItems.reduce((total, item) => total + item.subtotal, 0);
+}
+
+function getSelectedBranch() {
+    const branchId = branchSelect.value;
+    return branches.find((branch) => branch.id === branchId);
 }
 
 function resetOrderForm() {
@@ -104,51 +103,82 @@ function resetOrderForm() {
     renderSelectedItems();
 
     currentMenus = [];
-    listenMenusByRestaurant("");
+    listenMenusByBranch("");
 }
 
 /* ======================================================
-   Load Restaurants Realtime
+   Auto Seed Database
 ====================================================== */
 
-function listenRestaurants() {
-    const restaurantsRef = collection(db, "restaurants");
+async function prepareInitialData() {
+    try {
+        showLoading();
+
+        const result = await initializeDatabase();
+
+        if (result.status === "created") {
+            showAlert(result.message, "success");
+        }
+
+        if (result.status === "error") {
+            showAlert(result.message, "danger");
+        }
+
+    } catch (error) {
+        console.error("Prepare initial data error:", error);
+        showAlert("Gagal menyiapkan data awal.", "danger");
+    } finally {
+        hideLoading();
+    }
+}
+
+/* ======================================================
+   Load Branches Realtime
+====================================================== */
+
+function listenBranches() {
+    const branchesRef = collection(
+        db,
+        "restaurants",
+        RESTAURANT_ID,
+        "branches"
+    );
 
     onSnapshot(
-        restaurantsRef,
+        branchesRef,
         (snapshot) => {
-            restaurants = [];
+            branches = [];
 
             snapshot.forEach((documentSnapshot) => {
-                restaurants.push({
+                branches.push({
                     id: documentSnapshot.id,
                     ...documentSnapshot.data()
                 });
             });
 
-            renderRestaurantOptions();
+            renderBranchOptions();
         },
         (error) => {
-            console.error("Listen restaurants error:", error);
-            showAlert("Gagal mengambil data restoran.", "danger");
+            console.error("Listen branches error:", error);
+            showAlert("Gagal mengambil data cabang.", "danger");
         }
     );
 }
 
-function renderRestaurantOptions() {
-    const selectedValue = restaurantSelect.value;
+function renderBranchOptions() {
+    const selectedValue = branchSelect.value;
 
-    restaurantSelect.innerHTML = `<option value="">Pilih restoran</option>`;
+    branchSelect.innerHTML = `<option value="">Pilih cabang</option>`;
 
-    restaurants.forEach((restaurant) => {
+    branches.forEach((branch) => {
         const option = document.createElement("option");
-        option.value = restaurant.id;
-        option.textContent = `${restaurant.name} - ${restaurant.openHours}`;
-        restaurantSelect.appendChild(option);
+        option.value = branch.id;
+        option.textContent = `${branch.name} - ${branch.openHours}`;
+        branchSelect.appendChild(option);
     });
 
-    if (restaurants.some((restaurant) => restaurant.id === selectedValue)) {
-        restaurantSelect.value = selectedValue;
+    if (branches.some((branch) => branch.id === selectedValue)) {
+        branchSelect.value = selectedValue;
     }
 }
 
@@ -156,7 +186,7 @@ function renderRestaurantOptions() {
    Load Menus Realtime
 ====================================================== */
 
-function listenMenusByRestaurant(restaurantId) {
+function listenMenusByBranch(branchId) {
     if (unsubscribeMenus) {
         unsubscribeMenus();
     }
@@ -165,17 +195,24 @@ function listenMenusByRestaurant(restaurantId) {
     selectedItems = [];
     renderSelectedItems();
 
-    if (!restaurantId) {
+    if (!branchId) {
         menuContainer.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">🍽️</div>
-                <p class="mb-0">Silakan pilih restoran terlebih dahulu.</p>
+                <p class="mb-0">Silakan pilih cabang terlebih dahulu.</p>
             </div>
         `;
         return;
     }
 
-    const menusRef = collection(db, "restaurants", restaurantId, "menus");
+    const menusRef = collection(
+        db,
+        "restaurants",
+        RESTAURANT_ID,
+        "branches",
+        branchId,
+        "menus"
+    );
 
     unsubscribeMenus = onSnapshot(
         menusRef,
@@ -346,8 +383,8 @@ async function submitOrder(event) {
     const customerName = customerNameInput.value.trim();
     const customerPhone = customerPhoneInput.value.trim();
     const tableNumber = Number(tableNumberInput.value);
-    const restaurantId = restaurantSelect.value;
-    const restaurant = getSelectedRestaurant();
+    const branchId = branchSelect.value;
+    const branch = getSelectedBranch();
 
     if (!customerName) {
         showAlert("Nama customer wajib diisi.", "warning");
@@ -364,8 +401,8 @@ async function submitOrder(event) {
         return;
     }
 
-    if (!restaurantId || !restaurant) {
-        showAlert("Restoran wajib dipilih.", "warning");
+    if (!branchId || !branch) {
+        showAlert("Cabang wajib dipilih.", "warning");
         return;
     }
 
@@ -387,7 +424,8 @@ async function submitOrder(event) {
 
         const orderRef = await addDoc(collection(db, "orders"), {
             customerId: customerRef.id,
-            restaurantId: restaurantId,
+            restaurantId: RESTAURANT_ID,
+            branchId: branchId,
             tableNumber: tableNumber,
             status: "pending",
             totalPrice: totalPrice,
@@ -437,13 +475,13 @@ function listenOrders() {
                 };
 
                 const customerData = await getCustomerData(orderData.customerId);
-                const restaurantData = await getRestaurantData(orderData.restaurantId);
+                const branchData = await getBranchData(orderData.branchId);
                 const orderItems = await getOrderItems(orderData.id);
 
                 orders.push({
                     ...orderData,
                     customer: customerData,
-                    restaurant: restaurantData,
+                    branch: branchData,
                     items: orderItems
                 });
             }
@@ -477,22 +515,29 @@ async function getCustomerData(customerId) {
     }
 }
 
-async function getRestaurantData(restaurantId) {
+async function getBranchData(branchId) {
     try {
-        if (!restaurantId) {
+        if (!branchId) {
             return null;
         }
 
-        const restaurantRef = doc(db, "restaurants", restaurantId);
-        const restaurantSnapshot = await getDoc(restaurantRef);
+        const branchRef = doc(
+            db,
+            "restaurants",
+            RESTAURANT_ID,
+            "branches",
+            branchId
+        );
 
-        if (!restaurantSnapshot.exists()) {
+        const branchSnapshot = await getDoc(branchRef);
+
+        if (!branchSnapshot.exists()) {
             return null;
         }
 
-        return restaurantSnapshot.data();
+        return branchSnapshot.data();
     } catch (error) {
-        console.error("Get restaurant error:", error);
+        console.error("Get branch error:", error);
         return null;
     }
 }
@@ -545,7 +590,7 @@ function renderOrders(orders) {
                         <div class="fw-bold">${order.customer?.name || "-"}</div>
                         <div class="small-muted">${order.customer?.phone || "-"}</div>
                     </td>
-                    <td>${order.restaurant?.name || "-"}</td>
+                    <td>${order.branch?.name || "-"}</td>
                     <td>${order.tableNumber || "-"}</td>
                     <td>${itemNames || "-"}</td>
                     <td>${formatRupiah(order.totalPrice)}</td>
@@ -571,8 +616,8 @@ function renderStatusBadge(status) {
    Event Listener
 ====================================================== */
 
-restaurantSelect.addEventListener("change", (event) => {
-    listenMenusByRestaurant(event.target.value);
+branchSelect.addEventListener("change", (event) => {
+    listenMenusByBranch(event.target.value);
 });
 
 menuContainer.addEventListener("click", (event) => {
@@ -603,10 +648,12 @@ orderForm.addEventListener("submit", submitOrder);
    Init App
 ====================================================== */
 
-document.addEventListener("DOMContentLoaded", () => {
-    console.log("Restoran Nusantara siap dijalankan.");
+document.addEventListener("DOMContentLoaded", async () => {
+    console.log("Warung Nusantara Jombang siap dijalankan.");
 
-    listenRestaurants();
+    await prepareInitialData();
+
+    listenBranches();
     listenOrders();
-    listenMenusByRestaurant("");
+    listenMenusByBranch("");
 });
