@@ -40,7 +40,7 @@ const restaurantSeedData = [
                 price: 25000,
                 category: "Makanan Utama",
                 available: true,
-                imageUrl: "https://placehold.co/600x400/198754/ffffff?text=Nasi+Rawon"
+                imageUrl: "images/rawon.jpgn"
             },
             {
                 id: "menu_2",
@@ -48,7 +48,7 @@ const restaurantSeedData = [
                 price: 20000,
                 category: "Makanan Utama",
                 available: true,
-                imageUrl: "https://placehold.co/600x400/198754/ffffff?text=Soto+Ayam"
+                imageUrl: "images/soto.jpg"
             },
             {
                 id: "menu_3",
@@ -56,7 +56,7 @@ const restaurantSeedData = [
                 price: 22000,
                 category: "Makanan Utama",
                 available: true,
-                imageUrl: "https://placehold.co/600x400/198754/ffffff?text=Ayam+Geprek"
+                imageUrl: "images/geprek.jpg"
             },
             {
                 id: "menu_4",
@@ -64,7 +64,7 @@ const restaurantSeedData = [
                 price: 5000,
                 category: "Minuman",
                 available: true,
-                imageUrl: "https://placehold.co/600x400/198754/ffffff?text=Es+Teh"
+                imageUrl: "images/es teh.jpg"
             },
             {
                 id: "menu_5",
@@ -72,7 +72,7 @@ const restaurantSeedData = [
                 price: 12000,
                 category: "Minuman",
                 available: true,
-                imageUrl: "https://placehold.co/600x400/198754/ffffff?text=Jus+Alpukat"
+                imageUrl: "images/jus alpukat.jpg"
             }
         ]
     },
@@ -88,7 +88,7 @@ const restaurantSeedData = [
                 price: 18000,
                 category: "Makanan Utama",
                 available: true,
-                imageUrl: "https://placehold.co/600x400/198754/ffffff?text=Nasi+Pecel"
+                imageUrl: "images/pecel.jpg"
             },
             {
                 id: "menu_2",
@@ -96,7 +96,7 @@ const restaurantSeedData = [
                 price: 20000,
                 category: "Makanan Utama",
                 available: true,
-                imageUrl: "https://placehold.co/600x400/198754/ffffff?text=Bakso+Malang"
+                imageUrl: "images/bakso.jpg"
             },
             {
                 id: "menu_3",
@@ -104,7 +104,7 @@ const restaurantSeedData = [
                 price: 23000,
                 category: "Makanan Utama",
                 available: true,
-                imageUrl: "https://placehold.co/600x400/198754/ffffff?text=Mie+Goreng+Jawa"
+                imageUrl: "images/mie goreng.jpg"
             },
             {
                 id: "menu_4",
@@ -112,7 +112,7 @@ const restaurantSeedData = [
                 price: 7000,
                 category: "Minuman",
                 available: true,
-                imageUrl: "https://placehold.co/600x400/198754/ffffff?text=Es+Jeruk"
+                imageUrl: "images/es jeruk.jpg"
             },
             {
                 id: "menu_5",
@@ -120,7 +120,7 @@ const restaurantSeedData = [
                 price: 10000,
                 category: "Camilan",
                 available: true,
-                imageUrl: "https://placehold.co/600x400/198754/ffffff?text=Pisang+Goreng"
+                imageUrl: "images/pisang goreng.jpg"
             }
         ]
     }
